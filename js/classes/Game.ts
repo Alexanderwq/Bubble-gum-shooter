@@ -37,9 +37,9 @@ export default class Game {
     private ballSight: BallSight;
 
     constructor(level: color[][]) {
-        this.player = new Player(this.board);
         this.level = level;
         this.board = new Board();
+        this.player = new Player(this.board);
         this.ballsList = new BallsList(this.level, this.board);
         this.shootingBall = new ShootingBall(
             this.getInitialCoordsShootingBall(),

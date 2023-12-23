@@ -7,7 +7,7 @@ export default class Player {
     /**
      * @private - Координаты мышки пользователя (пока не используется)
      */
-    private coords: Coords;
+    // private coords: Coords;
 
     private board: Board;
 
@@ -44,9 +44,9 @@ export default class Player {
     }
 
     // TODO: на будущее
-    private getMousePos(e: MouseEvent): void {
-        const rect = this.board.getCanvas().getBoundingClientRect();
-        this.coords.y = Math.round((e.clientY - rect.top)/(rect.bottom - rect.top)*this.board.getCanvas().height)
-        this.coords.x = Math.round((e.clientX - rect.left)/(rect.right - rect.left)*this.board.getCanvas().width)
-    }
+    // private getMousePos(e: MouseEvent): void {
+    //     const rect = this.board.getCanvas().getBoundingClientRect();
+    //     this.coords.y = Math.round((e.clientY - rect.top)/(rect.bottom - rect.top)*this.board.getCanvas().height)
+    //     this.coords.x = Math.round((e.clientX - rect.left)/(rect.right - rect.left)*this.board.getCanvas().width)
+    // }
 }
