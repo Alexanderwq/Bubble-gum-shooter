@@ -27,10 +27,4 @@ export default class Player {
     notifySubscribers(event, data = null) {
         this.listeners[event].forEach((callback) => callback(data));
     }
-    // TODO: на будущее
-    getMousePos(e) {
-        const rect = this.board.getCanvas().getBoundingClientRect();
-        this.coords.y = Math.round((e.clientY - rect.top) / (rect.bottom - rect.top) * this.board.getCanvas().height);
-        this.coords.x = Math.round((e.clientX - rect.left) / (rect.right - rect.left) * this.board.getCanvas().width);
-    }
 }

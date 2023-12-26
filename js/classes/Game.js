@@ -7,9 +7,9 @@ import Player from "./Player.js";
 import { PlayerEvents } from "../types/PlayerEvents.js";
 export default class Game {
     constructor(level) {
-        this.player = new Player(this.board);
         this.level = level;
         this.board = new Board();
+        this.player = new Player(this.board);
         this.ballsList = new BallsList(this.level, this.board);
         this.shootingBall = new ShootingBall(this.getInitialCoordsShootingBall(), color.red, BallsList.radiusBall);
         this.ballSight = new BallSight({ x: this.board.getCanvas().width / 2, y: 300 });
