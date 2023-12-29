@@ -1,5 +1,6 @@
 import Ball from "./Ball.js";
 import UnitConverter from "../utils/UnitConverter.js";
+import Level from "./Level.js";
 /**
  * @class BallsList - Класс со всеми шарами (сетка)
  */
@@ -8,6 +9,9 @@ class BallsList {
         this.board = board;
         this.level = level;
         this.balls = this.setBalls();
+    }
+    getCountActiveRows() {
+        return this.balls.filter((ball) => ball.color).length / 7.5;
     }
     getActiveBalls() {
         return this.balls.filter((ball) => ball.active);
@@ -26,6 +30,16 @@ class BallsList {
             };
         })
             .sort((a, b) => a.distance - b.distance)[0].bubble;
+    }
+    addRow() {
+        let row;
+        if (this.getCountActiveRows() % 2) {
+            row = Level.getRow(true);
+        }
+        else {
+            row = Level.getRow(false);
+        }
+        return row;
     }
     getMatches(balls, excludeBalls = []) {
         balls.forEach((ball) => {

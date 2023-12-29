@@ -3,6 +3,7 @@ import Board from "./Board.js";
 import color from "../types/color.js";
 import UnitConverter from "../utils/UnitConverter.js";
 import {Coords} from "../types/Coords.js";
+import Level from "./Level.js";
 
 /**
  * @class BallsList - Класс со всеми шарами (сетка)
@@ -10,13 +11,17 @@ import {Coords} from "../types/Coords.js";
 export default class BallsList {
     public static radiusBall = 16;
     private readonly board: Board;
-    private readonly level: color[][];
-    public readonly balls: Ball[];
+    private readonly level: string[][];
+    public balls: Ball[];
 
-    constructor(level: color[][], board: Board) {
+    constructor(level: string[][], board: Board) {
         this.board = board;
         this.level = level;
         this.balls = this.setBalls()
+    }
+
+    getCountActiveRows(): number {
+        return this.balls.filter((ball: Ball) => ball.color).length / 7.5
     }
 
     public getActiveBalls(): Ball[] {
@@ -39,6 +44,17 @@ export default class BallsList {
                 }
             })
             .sort((a, b) => a.distance - b.distance)[0].bubble;
+    }
+
+    addRow() {
+        let row: string[];
+        if (this.getCountActiveRows() % 2) {
+            row = Level.getRow(true)
+        } else {
+            row = Level.getRow(false)
+        }
+
+        return row
     }
 
     getMatches(balls: Ball[], excludeBalls: Ball[] = []): Ball[] {
@@ -79,7 +95,6 @@ export default class BallsList {
                 bubble.active = false;
             });
         }
-
     }
 
     private setBalls(): Ball[] {

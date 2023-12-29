@@ -32,11 +32,11 @@ export default class Game {
     /**
      * @private - Шары для первоначальной отрисовки
      */
-    private readonly level: color[][];
+    private readonly level: string[][];
 
     private ballSight: BallSight;
 
-    constructor(level: color[][]) {
+    constructor(level: string[][]) {
         this.level = level;
         this.board = new Board();
         this.player = new Player(this.board);
@@ -104,7 +104,6 @@ export default class Game {
                         this.handleCollision(closestBubble);
                         this.ballsList.removeMatch(closestBubble)
                         this.ballsList.dropFloatingBubbles()
-
                     }
                 }
             })
