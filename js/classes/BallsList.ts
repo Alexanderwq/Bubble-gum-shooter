@@ -13,6 +13,7 @@ export default class BallsList {
     private readonly board: Board;
     private readonly level: string[][];
     public balls: Ball[];
+    private listeners: Function[] = [];
 
     constructor(level: string[][], board: Board) {
         this.board = board;
@@ -20,8 +21,16 @@ export default class BallsList {
         this.balls = this.setBalls()
     }
 
+    subscribe(callback: Function): void {
+        this.listeners.push(callback)
+    }
+
+    notify(): void {
+        this.listeners.forEach((callback: Function) => callback())
+    }
+
     getCountActiveRows(): number {
-        return this.balls.filter((ball: Ball) => ball.color).length / 7.5
+        return Math.floor(this.balls.length / 7.5)
     }
 
     public getActiveBalls(): Ball[] {
@@ -46,15 +55,20 @@ export default class BallsList {
             .sort((a, b) => a.distance - b.distance)[0].bubble;
     }
 
-    addRow() {
-        let row: string[];
-        if (this.getCountActiveRows() % 2) {
-            row = Level.getRow(true)
-        } else {
-            row = Level.getRow(false)
-        }
+    addRowToBegin(): void {
+        this.balls.forEach(ball => {
+            ball.coords.y += (BallsList.radiusBall * 2) + this.board.gridGap - 4;
+        })
+        this.balls = [...this.createRow(), ...this.balls]
+    }
 
-        return row
+    private createRow(): Ball[] {
+        const isEven = !Boolean(this.getCountActiveRows() % 2);
+        let colors: string[] = Level.getRow(isEven);
+
+        return colors.map((color: string, index: number) => {
+            return this.createBall(isEven, 0, index, color)
+        })
     }
 
     getMatches(balls: Ball[], excludeBalls: Ball[] = []): Ball[] {
@@ -94,7 +108,27 @@ export default class BallsList {
             neighbors.forEach(bubble => {
                 bubble.active = false;
             });
+            this.notify();
         }
+    }
+
+    private createBall(isEven: boolean, row: number, col: number, color: string|null): Ball {
+        // для нечетных строк с шарами нужно немного изменить местоположение
+        const startX = isEven ? 0 : 0.5 * this.board.grid;
+
+        // что бы позиционирование было не от левого края, а по центру шара
+        const center = this.board.grid / 2;
+
+        const coords: Coords = {
+            x: this.board.wallSize + (this.board.grid + this.board.gridGap) * col + startX + center,
+            y: this.board.wallSize + (this.board.grid + this.board.gridGap - 4) * row + center,
+        }
+        return new Ball(
+            coords,
+            color,
+            BallsList.radiusBall,
+            !!color,
+        )
     }
 
     private setBalls(): Ball[] {
@@ -108,23 +142,9 @@ export default class BallsList {
                 const colorBall = this.level[rowIndex]?.[colIndex];
                 const row = Math.floor(rowIndex);
                 const col = Math.floor(colIndex);
+                const isEven = !Boolean(row % 2)
 
-                // для нечетных строк с шарами нужно немного изменить местоположение
-                const startX = row % 2 === 0 ? 0 : 0.5 * this.board.grid;
-
-                // что бы позиционирование было не от левого края, а по центру шара
-                const center = this.board.grid / 2;
-
-                const coords: Coords = {
-                    x: this.board.wallSize + (this.board.grid + this.board.gridGap) * col + startX + center,
-                    y: this.board.wallSize + (this.board.grid + this.board.gridGap - 4) * row + center,
-                }
-                balls.push(new Ball(
-                    coords,
-                    colorBall ?? null,
-                    BallsList.radiusBall,
-                    !!colorBall,
-                ))
+                balls.push(this.createBall(isEven, row, col, colorBall ?? null))
             }
         }
 

@@ -6,12 +6,19 @@ import Level from "./Level.js";
  */
 class BallsList {
     constructor(level, board) {
+        this.listeners = [];
         this.board = board;
         this.level = level;
         this.balls = this.setBalls();
     }
+    subscribe(callback) {
+        this.listeners.push(callback);
+    }
+    notify() {
+        this.listeners.forEach((callback) => callback());
+    }
     getCountActiveRows() {
-        return this.balls.filter((ball) => ball.color).length / 7.5;
+        return Math.floor(this.balls.length / 7.5);
     }
     getActiveBalls() {
         return this.balls.filter((ball) => ball.active);
@@ -31,15 +38,18 @@ class BallsList {
         })
             .sort((a, b) => a.distance - b.distance)[0].bubble;
     }
-    addRow() {
-        let row;
-        if (this.getCountActiveRows() % 2) {
-            row = Level.getRow(true);
-        }
-        else {
-            row = Level.getRow(false);
-        }
-        return row;
+    addRowToBegin() {
+        this.balls.forEach(ball => {
+            ball.coords.y += (BallsList.radiusBall * 2) + this.board.gridGap - 4;
+        });
+        this.balls = [...this.createRow(), ...this.balls];
+    }
+    createRow() {
+        const isEven = !Boolean(this.getCountActiveRows() % 2);
+        let colors = Level.getRow(isEven);
+        return colors.map((color, index) => {
+            return this.createBall(isEven, 0, index, color);
+        });
     }
     getMatches(balls, excludeBalls = []) {
         balls.forEach((ball) => {
@@ -67,7 +77,19 @@ class BallsList {
             neighbors.forEach(bubble => {
                 bubble.active = false;
             });
+            this.notify();
         }
+    }
+    createBall(isEven, row, col, color) {
+        // для нечетных строк с шарами нужно немного изменить местоположение
+        const startX = isEven ? 0 : 0.5 * this.board.grid;
+        // что бы позиционирование было не от левого края, а по центру шара
+        const center = this.board.grid / 2;
+        const coords = {
+            x: this.board.wallSize + (this.board.grid + this.board.gridGap) * col + startX + center,
+            y: this.board.wallSize + (this.board.grid + this.board.gridGap - 4) * row + center,
+        };
+        return new Ball(coords, color, BallsList.radiusBall, !!color);
     }
     setBalls() {
         var _a;
@@ -79,15 +101,8 @@ class BallsList {
                 const colorBall = (_a = this.level[rowIndex]) === null || _a === void 0 ? void 0 : _a[colIndex];
                 const row = Math.floor(rowIndex);
                 const col = Math.floor(colIndex);
-                // для нечетных строк с шарами нужно немного изменить местоположение
-                const startX = row % 2 === 0 ? 0 : 0.5 * this.board.grid;
-                // что бы позиционирование было не от левого края, а по центру шара
-                const center = this.board.grid / 2;
-                const coords = {
-                    x: this.board.wallSize + (this.board.grid + this.board.gridGap) * col + startX + center,
-                    y: this.board.wallSize + (this.board.grid + this.board.gridGap - 4) * row + center,
-                };
-                balls.push(new Ball(coords, colorBall !== null && colorBall !== void 0 ? colorBall : null, BallsList.radiusBall, !!colorBall));
+                const isEven = !Boolean(row % 2);
+                balls.push(this.createBall(isEven, row, col, colorBall !== null && colorBall !== void 0 ? colorBall : null));
             }
         }
         return balls;

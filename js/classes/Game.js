@@ -5,8 +5,12 @@ import BallSight from "../classes/BallSight.js";
 import BallsList from "./BallsList.js";
 import Player from "./Player.js";
 import { PlayerEvents } from "../types/PlayerEvents.js";
-export default class Game {
+class Game {
     constructor(level) {
+        /**
+         * @private - Количество промахов
+         */
+        this.numberMisses = 0;
         this.level = level;
         this.board = new Board();
         this.player = new Player(this.board);
@@ -21,7 +25,9 @@ export default class Game {
         this.player.subscribe(PlayerEvents.space, () => {
             this.shootingBall.dX = Math.sin(this.ballSight.shootDeg) * this.shootingBall.speed;
             this.shootingBall.dY = -Math.cos(this.ballSight.shootDeg) * this.shootingBall.speed;
+            this.numberMisses += 1;
         });
+        this.ballsList.subscribe(() => this.handleMatch());
         requestAnimationFrame(() => this.render());
     }
     render() {
@@ -44,8 +50,6 @@ export default class Game {
             const closestBubble = this.ballsList.getClosestBubble(this.shootingBall);
             if (closestBubble) {
                 this.handleCollision(closestBubble);
-                this.ballsList.removeMatch(closestBubble);
-                this.ballsList.dropFloatingBubbles();
             }
         }
         this.ballsList
@@ -58,17 +62,24 @@ export default class Game {
                 }
                 if (closestBubble) {
                     this.handleCollision(closestBubble);
-                    this.ballsList.removeMatch(closestBubble);
-                    this.ballsList.dropFloatingBubbles();
                 }
             }
         });
+    }
+    handleMatch() {
+        this.numberMisses = 0;
     }
     handleCollision(closestBubble) {
         const copiedShootingBall = this.shootingBall.getCopy();
         closestBubble.color = copiedShootingBall.color;
         closestBubble.active = true;
         this.shootingBall.setDefaultPosition();
+        this.ballsList.removeMatch(closestBubble);
+        this.ballsList.dropFloatingBubbles();
+        if (this.numberMisses === Game.MAX_MISSES) {
+            this.ballsList.addRowToBegin();
+            this.numberMisses = 0;
+        }
     }
     handleBounceFromWalls() {
         if (this.shootingBall.coords.x - this.board.grid / 2 < this.board.wallSize) {
@@ -87,3 +98,8 @@ export default class Game {
         };
     }
 }
+/**
+ * @private - Максимальное количество промахов (при которых добавляется строка)
+ */
+Game.MAX_MISSES = 5;
+export default Game;

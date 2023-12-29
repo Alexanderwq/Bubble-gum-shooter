@@ -10,6 +10,11 @@ import {PlayerEvents} from "../types/PlayerEvents.js";
 
 export default class Game {
     /**
+     * @private - Максимальное количество промахов (при которых добавляется строка)
+     */
+    private static MAX_MISSES = 5;
+
+    /**
      * @private - Класс игрока
      */
     private player: Player;
@@ -36,6 +41,11 @@ export default class Game {
 
     private ballSight: BallSight;
 
+    /**
+     * @private - Количество промахов
+     */
+    private numberMisses: number = 0;
+
     constructor(level: string[][]) {
         this.level = level;
         this.board = new Board();
@@ -57,7 +67,11 @@ export default class Game {
         this.player.subscribe(PlayerEvents.space, () => {
             this.shootingBall.dX = Math.sin(this.ballSight.shootDeg) * this.shootingBall.speed;
             this.shootingBall.dY = -Math.cos(this.ballSight.shootDeg) * this.shootingBall.speed;
+
+            this.numberMisses += 1;
         })
+
+        this.ballsList.subscribe(() => this.handleMatch());
 
         requestAnimationFrame(() => this.render())
     }
@@ -85,9 +99,6 @@ export default class Game {
             const closestBubble = this.ballsList.getClosestBubble(this.shootingBall);
             if (closestBubble) {
                 this.handleCollision(closestBubble);
-                this.ballsList.removeMatch(closestBubble);
-                this.ballsList.dropFloatingBubbles()
-
             }
         }
 
@@ -102,11 +113,13 @@ export default class Game {
 
                     if (closestBubble) {
                         this.handleCollision(closestBubble);
-                        this.ballsList.removeMatch(closestBubble)
-                        this.ballsList.dropFloatingBubbles()
                     }
                 }
             })
+    }
+
+    handleMatch() {
+        this.numberMisses = 0
     }
 
     handleCollision(closestBubble: Ball) {
@@ -115,6 +128,14 @@ export default class Game {
         closestBubble.color = copiedShootingBall.color
         closestBubble.active = true
         this.shootingBall.setDefaultPosition()
+
+        this.ballsList.removeMatch(closestBubble)
+        this.ballsList.dropFloatingBubbles()
+
+        if (this.numberMisses === Game.MAX_MISSES) {
+            this.ballsList.addRowToBegin();
+            this.numberMisses = 0;
+        }
     }
 
     handleBounceFromWalls() {
